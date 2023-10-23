@@ -1,12 +1,3 @@
-import java.util.Arrays;
-import java.util.LinkedList;
-
-/*******************************************************
- * Assignemnt 3
- * Name: Wolf Mermelstein
- * UID: wsm32
- ********************************************************/
-
 public class AVLTree<T extends Comparable<T>> {
     private AVLTreeNode<T> root;
 
