@@ -350,13 +350,6 @@ public class AVLTree<T extends Comparable<T>> {
             setHeight(0);
         }
 
-        public AVLTreeNode(T key) {
-            setKey(key);
-            setLeft(null);
-            setRight(null);
-            setHeight(0);
-        }
-
         /**
          * Determine whether there is at least one child node.
          *
