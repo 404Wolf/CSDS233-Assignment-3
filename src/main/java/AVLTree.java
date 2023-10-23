@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.LinkedList;
+
 /*******************************************************
  * Assignemnt 3
  * Name: Wolf Mermelstein
@@ -5,10 +8,17 @@
  ********************************************************/
 
 public class AVLTree<T extends Comparable<T>> {
-    private AVLTreeNode<T> mRoot;
+    private AVLTreeNode<T> root;
 
     public AVLTree() {
-        mRoot = null;
+        setRoot(null);
+    }
+
+    /**
+     * Empty out the AVL tree.
+     */
+    public void clear() {
+        setRoot(null);
     }
 
     /**
@@ -16,15 +26,8 @@ public class AVLTree<T extends Comparable<T>> {
      *
      * @return The height of the tree.
      */
-    private int height(AVLTreeNode<T> tree) {
-        if (tree != null)
-            return tree.height;
-
-        return 0;
-    }
-
     public int height() {
-        return height(mRoot);
+        return getRoot().getHeight();
     }
 
     /**
@@ -32,16 +35,10 @@ public class AVLTree<T extends Comparable<T>> {
      * Preorder traversal "AVL tree", print the result
      */
     private void preOrder(AVLTreeNode<T> tree) {
-        if (tree != null) {
-            /*
-             * Write your code here
-             * use: System.out.print(tree.key + " ");
-             */
-        }
     }
 
     public void preOrder() {
-        preOrder(mRoot);
+        preOrder(getRoot());
     }
 
     /**
@@ -50,15 +47,20 @@ public class AVLTree<T extends Comparable<T>> {
      */
     private void inOrder(AVLTreeNode<T> tree) {
         if (tree != null) {
-            /*
-             * Write your code here
-             * use: System.out.print(tree.key + " ");
-             */
+            if (tree.getLeft() != null) {
+                inOrder(tree.getLeft());
+                System.out.print(tree.getLeft() + " ");
+            }
+            System.out.print(tree);
+            if (tree.getRight() != null) {
+                inOrder(tree.getRight());
+                System.out.print(tree.getRight() + " ");
+            }
         }
     }
 
     public void inOrder() {
-        inOrder(mRoot);
+        inOrder(getRoot());
     }
 
     /**
@@ -66,36 +68,30 @@ public class AVLTree<T extends Comparable<T>> {
      * Post-order traversal "AVL tree", print the result
      */
     private void postOrder(AVLTreeNode<T> tree) {
-        if (tree != null) {
-            /*
-             * Write your code here
-             * use: System.out.print(tree.key + " ");
-             */
-        }
     }
 
     public void postOrder() {
-        postOrder(mRoot);
+        postOrder(getRoot());
     }
 
     /**
-     * (Recursion) Search the node whose key-value is key in "AVL tree x"
+     * Search tree for node with node specific key.
      */
     private AVLTreeNode<T> search(AVLTreeNode<T> x, T key) {
         if (x == null)
             return x;
 
-        int cmp = key.compareTo(x.key);
+        int cmp = key.compareTo(x.getKey());
         if (cmp < 0)
-            return search(x.left, key);
+            return search(x.getLeft(), key);
         else if (cmp > 0)
-            return search(x.right, key);
+            return search(x.getRight(), key);
         else
             return x;
     }
 
     public AVLTreeNode<T> search(T key) {
-        return search(mRoot, key);
+        return search(getRoot(), key);
     }
 
     /**
@@ -103,12 +99,12 @@ public class AVLTree<T extends Comparable<T>> {
      */
     private AVLTreeNode<T> iterativeSearch(AVLTreeNode<T> x, T key) {
         while (x != null) {
-            int cmp = key.compareTo(x.key);
+            int cmp = key.compareTo(x.getKey());
 
             if (cmp < 0)
-                x = x.left;
+                x = x.getLeft();
             else if (cmp > 0)
-                x = x.right;
+                x = x.getRight();
             else
                 return x;
         }
@@ -117,149 +113,131 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     public AVLTreeNode<T> iterativeSearch(T key) {
-        return iterativeSearch(mRoot, key);
+        return iterativeSearch(getRoot(), key);
     }
 
     /**
-     * Question: a-4
-     * Find min node：return the smallest node of the AVL tree when "tree" as the
-     * root
+     * Find the lowest key in the tree.
+     *
+     * @return The node with the lowest key.
      */
-    private AVLTreeNode<T> minimum(AVLTreeNode<T> tree) {
-
-        /*
-         * Write your code here
-         */
-        return tree;
-    }
-
     public T minimum() {
-        AVLTreeNode<T> p = minimum(mRoot);
-        if (p != null)
-            return p.key;
+        AVLTreeNode<T> p = minimum(getRoot());
+        return p.getKey();
 
-        return null;
+    }
+
+    private AVLTreeNode<T> minimum(AVLTreeNode<T> tree) {
+        if (tree.getLeft() != null)
+            return minimum(tree.getLeft());
+        else
+            return tree;
     }
 
     /**
-     * Question: a-5
-     * Finds max node: return the largest node of the AVL tree with "tree" as the root
+     * Find the greatest key in the tree.
+     *
+     * @return The node with the greatest key.
      */
-    private AVLTreeNode<T> maximum(AVLTreeNode<T> tree) {
-        /*
-         * Write your code here
-         */
-        return tree;
-    }
-
     public T maximum() {
-        AVLTreeNode<T> p = maximum(mRoot);
+        AVLTreeNode<T> p = maximum(getRoot());
         if (p != null)
-            return p.key;
+            return p.getKey();
 
         return null;
     }
 
-    /**
-     * Left rotate a tree.
-     *
-     * @return The root node after rotated
-     */
-    private AVLTreeNode<T> leftLeftRotation(AVLTreeNode<T> k2) {
-        AVLTreeNode<T> k1;
-
-        k1 = k2.left;
-        k2.left = k1.right;
-        k1.right = k2;
-
-        k2.height = Math.max(height(k2.left), height(k2.right)) + 1;
-        k1.height = Math.max(height(k1.left), k2.height) + 1;
-
-        return k1;
+    private AVLTreeNode<T> maximum(AVLTreeNode<T> tree) {
+        if (tree.getRight() != null)
+            return minimum(tree.getRight());
+        else
+            return tree;
     }
 
     /**
-     * Right rotate a tree.
+     * Insert an element into the tree.
      *
-     * @return The root node after rotated
+     * @param key The key to insert.
      */
-    private AVLTreeNode<T> rightRightRotation(AVLTreeNode<T> k1) {
-        AVLTreeNode<T> k2;
-
-        k2 = k1.right;
-        k1.right = k2.left;
-        k2.left = k1;
-
-        k1.height = Math.max(height(k1.left), height(k1.right)) + 1;
-        k2.height = Math.max(height(k2.right), k1.height) + 1;
-
-        return k2;
-    }
-
-    /**
-     * Double left rotate a tree.
-     *
-     * @return The root node after rotated
-     */
-    private AVLTreeNode<T> leftRightRotation(AVLTreeNode<T> k3) {
-        k3.left = rightRightRotation(k3.left);
-
-        return leftLeftRotation(k3);
-    }
-
-    /**
-     * Double right rotate a node.
-     *
-     * @return The root node after rotated
-     */
-    private AVLTreeNode<T> rightLeftRotation(AVLTreeNode<T> k1) {
-        k1.right = leftLeftRotation(k1.right);
-
-        return rightRightRotation(k1);
-    }
-
-    /**
-     * Question a-6
-     * Inserts an element into the tree.
-     *
-     * @param tree The root node of AVL tree.
-     * 
-     * @param key The insertion key-value.
-     * 
-     * @return The root node of the tree.
-     */
-    private AVLTreeNode<T> insert(AVLTreeNode<T> tree, T key) {
-        if (tree == null) {
-            tree = new AVLTreeNode<T>(key, null, null);
-            if (tree == null) {
-                System.out.println("ERROR: create avltree node failed!");
-                return null;
-            }
-        } else {
-            int cmp = key.compareTo(tree.key);
-
-            if (cmp < 0) { // Case: The key should be inserted into the "left subtree of the tree"
-                /*
-                 * Write your code here
-                 */
-            } else if (cmp > 0) { // Case: The key should be inserted into the "right subtree of the tree"
-                /*
-                 * Write your code here
-                 * If the AVL tree is out of balance after the node is inserted, adjust it
-                 * accordingly.
-                 */
-            } else { // cmp==0
-                System.out.println("Insert Fail：Cannot insert the same element！");
-            }
-        }
-
-        tree.height = Math.max(height(tree.left), height(tree.right)) + 1;
-
-        return tree;
-    }
-
     public void insert(T key) {
-        mRoot = insert(mRoot, key);
+        if (getRoot() == null)
+            setRoot(new AVLTreeNode<>(key, null, null));
+        else {
+            AVLTreeNode<T> newNode = new AVLTreeNode<>(key, null, null);
+            insert(getRoot(), newNode);
+            rebalance(newNode);
+        }
+    }
+
+    private void insert(AVLTreeNode<T> root, AVLTreeNode<T> node) {
+        int cmp = node.getKey().compareTo(root.getKey());
+
+        // The key should be inserted into the "left subtree of the tree"
+        if (cmp < 0) {
+            if (!root.hasLeft())
+                root.setLeft(node);
+            else
+                insert(root.getLeft(), node);
+        // The key should be inserted into the "right subtree of the tree"
+        } else {
+            if (!root.hasRight())
+                root.setRight(node);
+            else
+                insert(root.getRight(), node);
+        }
+    }
+
+    private void rebalance(AVLTreeNode<T> node) {
+        AVLTreeNode<T> prev = null;
+        AVLTreeNode<T> prePrev = null;
+        boolean stillRequiresBalance = true;
+
+        while (node != null) {
+            node.updateHeight();
+
+            if (stillRequiresBalance) {
+                // If the balance is 0 we can stop investigating
+                if (node.hasChild() && node.balance() == 0)
+                    stillRequiresBalance = false;
+
+                // If the balance is -2 or 2 then we do need to rotate, depending on
+                if (Math.abs(node.balance()) == 2) {
+                    // Right child right subtree -> rotate node left
+                    if (node.hasRight() && prePrev == node.getRight().getRight()) {
+                        if (getRoot() == node)
+                            setRoot(node.getRight());
+                        node.leftRotate();
+                    }
+                    // Left child left subtree -> rotate node right
+                    if (node.hasLeft() && prePrev == node.getLeft().getLeft()) {
+                        if (getRoot() == node)
+                            setRoot(node.getLeft());
+                        node.rightRotate();
+                    }
+                    if (prev != null) {
+                        // Left child right subtree -> rotate prev left, rotate node right
+                        if (node.hasLeft() && prePrev == node.getLeft().getRight()) {
+                            prev.leftRotate();
+                            node.rightRotate();
+                        }
+                        // Right child right subtree -> rotate prev right, rotate node left
+                        if (node.hasRight() && prePrev == node.getRight().getLeft()) {
+                            prev.rightRotate();
+                            node.leftRotate();
+                        }
+                    }
+
+                    // Since a rotation has been preformed the investigation is complete.
+                    stillRequiresBalance = false;
+                }
+            }
+
+            node.updateHeight();
+
+            prePrev = prev;
+            prev = node;
+            node = node.getParent();
+        }
     }
 
     /**
@@ -277,7 +255,7 @@ public class AVLTree<T extends Comparable<T>> {
         if (tree == null || z == null)
             return null;
 
-        int cmp = z.key.compareTo(tree.key);
+        int cmp = z.getKey().compareTo(tree.getKey());
 
         if (cmp < 0) { // The node to be deleted is in the "left subtree of tree"
 
@@ -297,8 +275,8 @@ public class AVLTree<T extends Comparable<T>> {
 
         } else {
             // If both the left and right children of "tree" are not empty
-            if ((tree.left != null) && (tree.right != null)) {
-                if (height(tree.left) > height(tree.right)) {
+            if ((tree.getLeft() != null) && (tree.getRight() != null)) {
+                if (tree.getLeft().getHeight() > tree.getRight().getHeight()) {
                     /*
                      * Write your code here
                      */
@@ -310,7 +288,7 @@ public class AVLTree<T extends Comparable<T>> {
                 }
             } else {
                 AVLTreeNode<T> tmp = tree;
-                tree = (tree.left != null) ? tree.left : tree.right;
+                tree = (tree.getLeft() != null) ? tree.getLeft() : tree.getRight();
                 tmp = null;
             }
         }
@@ -321,8 +299,8 @@ public class AVLTree<T extends Comparable<T>> {
     public void remove(T key) {
         AVLTreeNode<T> z;
 
-        if ((z = search(mRoot, key)) != null)
-            mRoot = remove(mRoot, z);
+        if ((z = search(getRoot(), key)) != null)
+            setRoot(remove(getRoot(), z));
     }
 
     /**
@@ -335,31 +313,191 @@ public class AVLTree<T extends Comparable<T>> {
     private void print(AVLTreeNode<T> tree, T key, int direction) {
         if (tree != null) {
             if (direction == 0)
-                System.out.printf("%2d is root\n", tree.key, key);
+                System.out.printf("%2d is root\n", tree.getKey(), key);
             else
-                System.out.printf("%2d is %2d's %6s child\n", tree.key, key, direction == 1 ? "right" : "left");
+                System.out.printf("%2d is %2d's %6s child\n", tree.getKey(), key, direction == 1 ? "right" : "left");
 
-            print(tree.left, tree.key, -1);
-            print(tree.right, tree.key, 1);
+            print(tree.getLeft(), tree.getKey(), -1);
+            print(tree.getRight(), tree.getKey(), 1);
         }
     }
 
     public void print() {
-        if (mRoot != null)
-            print(mRoot, mRoot.key, 0);
+        if (getRoot() != null)
+            print(getRoot(), getRoot().getKey(), 0);
     }
 
-    static class AVLTreeNode<T extends Comparable<T>> {
-        T key; // key
-        int height; // height
-        AVLTreeNode<T> left; // left child
-        AVLTreeNode<T> right; // right child
+    public AVLTreeNode<T> getRoot() {
+        return root;
+    }
+
+    protected void setRoot(AVLTreeNode<T> mRoot) {
+        this.root = mRoot;
+    }
+
+    public static class AVLTreeNode<T extends Comparable<T>> {
+        private T key;
+        private int height;
+        private int balance;
+        private AVLTreeNode<T> left;
+        private AVLTreeNode<T> right;
+        private AVLTreeNode<T> parent;
 
         public AVLTreeNode(T key, AVLTreeNode<T> left, AVLTreeNode<T> right) {
+            setKey(key);
+            setLeft(left);
+            setRight(right);
+            setHeight(0);
+        }
+
+        public AVLTreeNode(T key) {
+            setKey(key);
+            setLeft(null);
+            setRight(null);
+            setHeight(0);
+        }
+
+        /**
+         * Determine whether there is at least one child node.
+         *
+         * @return Whether there is at least one child node.
+         */
+        public boolean hasChild() {
+            return (this.getLeft() != null || this.getRight() != null);
+        }
+
+        /**
+         * Obtain the balance of the node.
+         *
+         * @implNote The balance of a node is equal to the height of the right subtree minus the height of the left subtree.
+         * @return The balance of the node.
+         */
+        public int balance() {
+            if (!hasChild())
+                return 0;
+            else if (getLeft() == null)
+                return getRight().getHeight() + 1;
+            else if (getRight() == null)
+                return -(getLeft().getHeight() + 1);
+            else
+                return getRight().getHeight() - getLeft().getHeight();
+        }
+
+        /**
+         * Left rotate the node.
+         */
+        protected void leftRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
+            if (parent != null) {
+                if (parent.getLeft() == node)
+                    parent.setLeft(node.getRight());
+                else if (parent.getRight() == node)
+                    parent.setRight(node.getRight());
+            }
+
+            // Store a reference to the original right child node
+            AVLTreeNode<T> nodeRight = node.getRight();
+
+            // Update node
+            node.setRight(nodeRight.getLeft());
+
+            // Update node's left child
+            nodeRight.setLeft(node);
+            nodeRight.setParent(parent);
+        }
+
+        protected void leftRotate() {
+            leftRotate(this, getParent());
+        }
+
+        /**
+         * Right rotate the node.
+         */
+        protected void rightRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
+            if (parent != null) {
+                if (parent.getRight() == node)
+                    parent.setRight(node.getLeft());
+                else if (parent.getLeft() == node)
+                    parent.setLeft(node.getLeft());
+            }
+
+            // Store a reference to the original left child node
+            AVLTreeNode<T> nodeLeft = node.getLeft();
+
+            // Update node
+            node.setLeft(nodeLeft.getRight());
+
+            // Update node's left child
+            nodeLeft.setRight(node);
+            nodeLeft.setParent(parent);
+        }
+
+        protected void rightRotate() {
+            rightRotate(this, getParent());
+        }
+
+        public void updateHeight() {
+            setHeight(1 + Math.max(height(getLeft()), height(getRight())));
+        }
+
+        private int height(AVLTreeNode<T> node) {
+            return node == null ? -1 : node.getHeight();
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        protected void setHeight(int height) {
+            this.height = height;
+        }
+
+        public T getKey() {
+            return key;
+        }
+
+        public void setKey(T key) {
             this.key = key;
+        }
+
+        public AVLTreeNode<T> getLeft() {
+            return left;
+        }
+
+        public boolean hasLeft() {
+            return getLeft() != null;
+        }
+
+        protected void setLeft(AVLTreeNode<T> left) {
             this.left = left;
+            if (left != null)
+                left.setParent(this);
+        }
+
+        public AVLTreeNode<T> getRight() {
+            return right;
+        }
+
+        public boolean hasRight() {
+            return getRight() != null;
+        }
+
+        protected void setRight(AVLTreeNode<T> right) {
             this.right = right;
-            this.height = 0;
+            if (right != null)
+                right.setParent(this);
+        }
+
+        @Override
+        public String toString() {
+            return "AVLNode(key=" + getKey() + ", left=" + (getLeft() == null ? "null" : getLeft().getKey()) + ", right=" + (getRight() == null ? "null" : getRight().getKey()) + ", height=" + getHeight() + ", balance=" + balance() + ")";
+        }
+
+        public AVLTreeNode<T> getParent() {
+            return parent;
+        }
+
+        protected void setParent(AVLTreeNode<T> parent) {
+            this.parent = parent;
         }
     }
 }
