@@ -1,12 +1,22 @@
 public class AVLTree<T extends Comparable<T>> {
     private AVLTreeNode<T> root;
 
-    public AVLTree() {
-        setRoot(null);
+    public AVLTree() {}
+
+    public AVLTree(Iterable<T> sequence) {
+        for (T element : sequence)
+            insert(element);
+    }
+
+    public AVLTree(Object[] sequence) {
+        for (Object element : sequence)
+            insert((T) element);
     }
 
     /**
      * Empty out the AVL tree.
+     *
+     * @implSpec Clears the root.
      */
     public void clear() {
         setRoot(null);
@@ -22,55 +32,74 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Question: a-1
-     * Preorder traversal "AVL tree", print the result
+     * Perform a preorder traversal of the tree, progressively printing out the node keys.
      */
-    private void preOrder(AVLTreeNode<T> tree) {
+    public void preorder() {
+        preorder(getRoot());
     }
 
-    public void preOrder() {
-        preOrder(getRoot());
-    }
-
-    /**
-     * Question: a-2
-     * In-order traversal "AVL tree", print the result
-     */
-    private void inOrder(AVLTreeNode<T> tree) {
+    private void preorder(AVLTreeNode<T> tree) {
         if (tree != null) {
-            if (tree.getLeft() != null) {
-                inOrder(tree.getLeft());
-                System.out.print(tree.getLeft() + " ");
+            System.out.print(tree.getKey() + " ");
+            if (tree.hasLeft()) {
+                preorder(tree.getLeft());
             }
-            System.out.print(tree);
-            if (tree.getRight() != null) {
-                inOrder(tree.getRight());
-                System.out.print(tree.getRight() + " ");
+            if (tree.hasRight()) {
+                preorder(tree.getRight());
             }
         }
     }
 
-    public void inOrder() {
-        inOrder(getRoot());
+    /**
+     * Perform an inorder traversal of the tree, progressively printing out the node keys.
+     */
+    public void inorder() {
+        inorder(getRoot());
+    }
+
+    private void inorder(AVLTreeNode<T> tree) {
+        if (tree != null) {
+            if (tree.hasLeft()) {
+                inorder(tree.getLeft());
+            }
+            System.out.print(tree.getKey() + " ");
+            if (tree.hasRight()) {
+                inorder(tree.getRight());
+            }
+        }
     }
 
     /**
-     * Question: a-3
-     * Post-order traversal "AVL tree", print the result
+     * Perform a postorder traversal of the tree, progressively printing out the node keys.
      */
-    private void postOrder(AVLTreeNode<T> tree) {
+    private void postorder(AVLTreeNode<T> tree) {
+        if (tree != null) {
+            if (tree.hasLeft()) {
+                postorder(tree.getLeft());
+            }
+            if (tree.hasRight()) {
+                postorder(tree.getRight());
+            }
+            System.out.print(tree.getKey() + " ");
+        }
     }
 
-    public void postOrder() {
-        postOrder(getRoot());
+    public void postorder() {
+        postorder(getRoot());
     }
 
     /**
      * Search tree for node with node specific key.
+     *
+     * @return The node with the specific key requested.
      */
+    public AVLTreeNode<T> search(T key) {
+        return search(getRoot(), key);
+    }
+
     private AVLTreeNode<T> search(AVLTreeNode<T> x, T key) {
         if (x == null)
-            return x;
+            return null;
 
         int cmp = key.compareTo(x.getKey());
         if (cmp < 0)
@@ -81,32 +110,6 @@ public class AVLTree<T extends Comparable<T>> {
             return x;
     }
 
-    public AVLTreeNode<T> search(T key) {
-        return search(getRoot(), key);
-    }
-
-    /**
-     * (Non-Recursion) Search the node whose key-value is key in "AVL tree x"
-     */
-    private AVLTreeNode<T> iterativeSearch(AVLTreeNode<T> x, T key) {
-        while (x != null) {
-            int cmp = key.compareTo(x.getKey());
-
-            if (cmp < 0)
-                x = x.getLeft();
-            else if (cmp > 0)
-                x = x.getRight();
-            else
-                return x;
-        }
-
-        return x;
-    }
-
-    public AVLTreeNode<T> iterativeSearch(T key) {
-        return iterativeSearch(getRoot(), key);
-    }
-
     /**
      * Find the lowest key in the tree.
      *
@@ -115,11 +118,10 @@ public class AVLTree<T extends Comparable<T>> {
     public T minimum() {
         AVLTreeNode<T> p = minimum(getRoot());
         return p.getKey();
-
     }
 
     private AVLTreeNode<T> minimum(AVLTreeNode<T> tree) {
-        if (tree.getLeft() != null)
+        if (tree.hasLeft())
             return minimum(tree.getLeft());
         else
             return tree;
@@ -131,18 +133,14 @@ public class AVLTree<T extends Comparable<T>> {
      * @return The node with the greatest key.
      */
     public T maximum() {
-        AVLTreeNode<T> p = maximum(getRoot());
-        if (p != null)
-            return p.getKey();
-
-        return null;
+        return maximum(getRoot()).getKey();
     }
 
-    private AVLTreeNode<T> maximum(AVLTreeNode<T> tree) {
-        if (tree.getRight() != null)
-            return minimum(tree.getRight());
+    private AVLTreeNode<T> maximum(AVLTreeNode<T> root) {
+        if (root.hasRight())
+            return maximum(root.getRight());
         else
-            return tree;
+            return root;
     }
 
     /**
@@ -232,66 +230,16 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Question: a-7
-     * Delete the node (z), then return the root node
-     *
-     * @param tree: the root node of AVL tree
-     * 
-     * @param z: the node to be deleted
-     * 
-     * @return tree: root node
-     */
-    private AVLTreeNode<T> remove(AVLTreeNode<T> tree, AVLTreeNode<T> z) {
-        // if the root is empty or there are no nodes to delete, return "null"
-        if (tree == null || z == null)
-            return null;
-
-        int cmp = z.getKey().compareTo(tree.getKey());
-
-        if (cmp < 0) { // The node to be deleted is in the "left subtree of tree"
-
-            /*
-             * Write your code here
-             * If the AVL tree is out of balance after the node is deleted, adjust it
-             * accordingly.
-             */
-
-        } else if (cmp > 0) { // The node to be deleted is in the "right subtree of tree"
-
-            /*
-             * Write your code here
-             * If the AVL tree is out of balance after the node is deleted, adjust it
-             * accordingly.
-             */
-
-        } else {
-            // If both the left and right children of "tree" are not empty
-            if ((tree.getLeft() != null) && (tree.getRight() != null)) {
-                if (tree.getLeft().getHeight() > tree.getRight().getHeight()) {
-                    /*
-                     * Write your code here
-                     */
-
-                } else {
-                    /*
-                     * Write your code here
-                     */
-                }
-            } else {
-                AVLTreeNode<T> tmp = tree;
-                tree = (tree.getLeft() != null) ? tree.getLeft() : tree.getRight();
-                tmp = null;
-            }
-        }
-
-        return tree;
+     * Delete a node with a specified key.
+     ***/
+    public void remove(T key) {
+        remove(getRoot(), search(key));
     }
 
-    public void remove(T key) {
-        AVLTreeNode<T> z;
-
-        if ((z = search(getRoot(), key)) != null)
-            setRoot(remove(getRoot(), z));
+    private void remove(AVLTreeNode<T> tree, AVLTreeNode<T> z) {
+        // if the root is empty or there are no nodes to delete, return "null"
+        if (tree == null || z == null)
+            return;
     }
 
     /**
