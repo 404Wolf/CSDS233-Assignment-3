@@ -1,4 +1,3 @@
-import javax.swing.text.Element;
 import java.util.NoSuchElementException;
 
 public class AVLTree<T extends Comparable<T>> {
@@ -176,6 +175,8 @@ public class AVLTree<T extends Comparable<T>> {
 
     /**
      * Delete a node with a specified key.
+     *
+     * @param key The key of the node to remove.
      ***/
     public void remove(T key) {
         remove(search(key));
@@ -218,7 +219,7 @@ public class AVLTree<T extends Comparable<T>> {
     /**
      * Insert an element into the tree.
      *
-     * @param key The key to insert.
+     * @param key The key to assign to the node being inserted.
      */
     public void insert(T key) {
         if (getRoot() == null)
@@ -253,7 +254,7 @@ public class AVLTree<T extends Comparable<T>> {
      *
      * @param node The leaf node to ascend from.
      */
-    private void rebalance(AVLTreeNode<T> node) {
+    protected void rebalance(AVLTreeNode<T> node) {
         AVLTreeNode<T> prev = null;
         AVLTreeNode<T> prePrev = null;
         boolean stillRequiresBalance = true;
@@ -325,6 +326,9 @@ public class AVLTree<T extends Comparable<T>> {
         }
     }
 
+    /**
+     * Print out information about all the nodes on the tree.
+     */
     public void print() {
         if (getRoot() != null)
             print(getRoot(), getRoot().getKey(), 0);
