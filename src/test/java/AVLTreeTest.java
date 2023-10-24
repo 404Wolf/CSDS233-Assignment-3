@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AVLTreeTest {
     private static final Integer[] testSequence1 = { 3, 2, 1, 4 };
-    private static final Integer[] testSequence2 = { 3, 2, 1, 4, 5, 6, 7, 16, 15, 14, 13, 12, 11, 10, 8, 9 };
+    private static final Integer[] testSequence2 = { 1, 0, 2, 3, 4, 5, 6, -1, 7 };
     private final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
 
     public String lastPrintedLine() {
@@ -44,13 +44,44 @@ class AVLTreeTest {
 
     @Test
     public void testHeight() {
-        assertEquals(2, (new AVLTree<>(testSequence1)).height());
+        AVLTree<Integer> tree = new AVLTree<>();
+        tree.insert(1);
+        tree.insert(0);
+        tree.insert(2);
+        tree.insert(3);
+        tree.insert(4);
+        assertEquals(0, tree.getRoot().getLeft().getHeight());
+        assertEquals(1, tree.getRoot().getRight().getHeight());
+        assertEquals(0, tree.getRoot().getRight().getRight().getHeight());
+
+        tree.insert(5);
+        tree.insert(6);
+        assertEquals(1, tree.getRoot().getLeft().getHeight());
+        assertEquals(0, tree.getRoot().getLeft().getLeft().getHeight());
+        assertEquals(1, tree.getRoot().getRight().getHeight());
+        assertEquals(0, tree.getRoot().getRight().getRight().getHeight());
+
+        tree.insert(7);
+        assertEquals(1, tree.getRoot().getLeft().getHeight());
+        assertEquals(2, tree.getRoot().getRight().getHeight());
+
+        tree.clear();
+        tree.insert(3);
+        assertEquals(0, tree.height());
+        tree.insert(2);
+        assertEquals(1, tree.height());
+        tree.insert(1);
+        assertEquals(1, tree.height());
+        tree.insert(4);
+        assertEquals(1, tree.getRoot().getRight().getHeight());
+        assertEquals(2, tree.height());
+
+        assertEquals(3, (new AVLTree<>(testSequence2)).height());
     }
 
     @Test
     public void testMax() {
         AVLTree<Integer> tree = new AVLTree<>(testSequence1);
-        System.out.println(tree.getRoot().getRight().getRight());
         assertEquals(4, (tree).maximum());
     }
 
@@ -60,12 +91,65 @@ class AVLTreeTest {
     }
 
     @Test
-    public void testDelete() {
+    public void testInorderSuccessor() {
         AVLTree<Integer> tree = new AVLTree<>(testSequence1);
-        tree.remove(8);
-        tree.inorder();
-        assertEquals(4, tree.height());
-        assertEquals("1 2 3 4 5 6 7 9 10 11 12 13 14 15 16", lastPrintedLine());
+        assertEquals(3, tree.inorderSuccessor(tree.getRoot()).getKey());
+        assertEquals(2, tree.inorderSuccessor(tree.getRoot().getLeft()).getKey());
+        tree.insert(0);
+        tree.insert(5);
+        assertEquals(4, tree.inorderSuccessor(tree.getRoot().getRight().getLeft()).getKey());
+        assertEquals(5, tree.inorderSuccessor(tree.getRoot().getRight()).getKey());
+        assertEquals(1, tree.inorderSuccessor(tree.getRoot().getLeft().getLeft()).getKey());
+    }
+
+    @Test
+    public void testDelete() {
+        AVLTree<Integer> tree = new AVLTree<>();
+
+        // Test a case 1 deletion (node is a leaf)
+        tree.insert(1);
+        tree.insert(2);
+        tree.insert(3);
+        tree.remove(3);
+        assertNull(tree.getRoot().getRight());
+        assertEquals(1, tree.getRoot().getLeft().getKey());
+        assertEquals(2, tree.getRoot().getKey());
+
+        tree.clear();
+        // Test a case 2 deletion (node has one child)
+        tree.insert(1);
+        tree.insert(2);
+        tree.insert(3);
+        tree.insert(4);
+        tree.remove(3);
+        assertEquals(4, tree.getRoot().getRight().getKey());
+
+        tree.clear();
+        // Test a case 3 deletion (node has two children)
+        tree.insert(1);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(5);
+        tree.insert(3);
+        tree.remove(4);
+        assertEquals(2, tree.getRoot().getKey());
+        assertEquals(5, tree.getRoot().getRight().getKey());
+        assertNull(tree.getRoot().getRight().getRight());
+
+        // Test an additional case 3 deletion involving rebalancing
+        tree = new AVLTree<>(testSequence2);
+
+        tree.remove(3);
+        assertEquals(tree.getRoot(), tree.getRoot().getRight().getParent());
+        assertEquals(3, tree.height());
+        assertEquals(1, tree.getRoot().getRight().getHeight());
+        assertEquals(4, tree.getRoot().getKey());
+        assertEquals(1, tree.getRoot().getLeft().getKey());
+        assertEquals(0, tree.getRoot().getLeft().getLeft().getKey());
+        assertEquals(5, tree.getRoot().getRight().getLeft().getKey());
+        assertEquals(6, tree.getRoot().getRight().getKey());
+        assertEquals(7, tree.getRoot().getRight().getRight().getKey());
+        assertNull(tree.getRoot().getRight().getRight().getRight());
     }
 
     @Test

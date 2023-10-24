@@ -1,3 +1,6 @@
+import javax.swing.text.Element;
+import java.util.NoSuchElementException;
+
 public class AVLTree<T extends Comparable<T>> {
     private AVLTreeNode<T> root;
 
@@ -20,6 +23,19 @@ public class AVLTree<T extends Comparable<T>> {
      */
     public void clear() {
         setRoot(null);
+    }
+
+    /**
+     * Add all the values of a list.
+     */
+    public void extend(Object[] arr) {
+        for (Object element : arr)
+            insert((T) element);
+    }
+
+    public void extend(Iterable<T> list) {
+        for (T element : list)
+            insert(element);
     }
 
     /**
@@ -94,20 +110,37 @@ public class AVLTree<T extends Comparable<T>> {
      * @return The node with the specific key requested.
      */
     public AVLTreeNode<T> search(T key) {
-        return search(getRoot(), key);
+        if (getRoot() == null)
+            throw new NoSuchElementException("Empty tree does not have any elements.");
+
+        AVLTreeNode<T> cursor = getRoot();
+
+        int cmp;
+        while (cursor != null) {
+            cmp = key.compareTo(cursor.getKey());
+            if (cmp == 0)
+                return cursor;
+            else if (cmp < 0)
+                cursor = cursor.getLeft();
+            else
+                cursor = cursor.getRight();
+        }
+        throw new NoSuchElementException("Element not found.");
     }
 
-    private AVLTreeNode<T> search(AVLTreeNode<T> x, T key) {
-        if (x == null)
-            return null;
+    /**
+     * Find the inorder successor of a node.
+     */
+    public AVLTreeNode<T> inorderSuccessor(AVLTreeNode<T> node) {
+        AVLTreeNode<T> cursor = node.getRight();
+        if (cursor == null)
+            return node.getParent();
 
-        int cmp = key.compareTo(x.getKey());
-        if (cmp < 0)
-            return search(x.getLeft(), key);
-        else if (cmp > 0)
-            return search(x.getRight(), key);
-        else
-            return x;
+        while (true) {
+            if (cursor.hasLeft())
+                cursor = cursor.getLeft();
+            else return cursor;
+        }
     }
 
     /**
@@ -144,6 +177,47 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
+     * Delete a node with a specified key.
+     ***/
+    public void remove(T key) {
+        remove(search(key));
+    }
+
+    private void remove(AVLTreeNode<T> node) {
+        // Case 1: Node is a leaf
+        // Resolution: Remove the node
+        if (!node.hasChild()) {
+            if (node.getParent().getLeft() == node)
+                node.getParent().setLeft(null);
+            if (node.getParent().getRight() == node)
+                node.getParent().setRight(null);
+            rebalance(node.getParent());
+        }
+        // Case 2: Node has one child
+        // Resolution: Swap the node with its child, then remove the node
+        else if (node.hasLeft() ^ node.hasRight()) {
+            if (node.hasLeft()) {
+                node.setKey(node.getLeft().getKey());
+                remove(node.getLeft());
+            }
+            if (node.hasRight()) {
+                node.setKey(node.getRight().getKey());
+                remove(node.getRight());
+            }
+        }
+        // Case 3: Node has two children
+        // Resolution: Swap node with inorder successor, then delete the node
+        else if (node.hasLeft() && node.hasRight()) {
+            // First swap the node with its inorder successor (but only update node, we don't actually need to do a
+            // complete swap for the inorder successor's parent since we're going to delete it right after).
+            AVLTreeNode<T> inorderSuccessor = inorderSuccessor(node);
+            node.setKey(inorderSuccessor.getKey());
+            remove(inorderSuccessor);
+            rebalance(inorderSuccessor);
+        }
+    }
+
+    /**
      * Insert an element into the tree.
      *
      * @param key The key to insert.
@@ -176,6 +250,11 @@ public class AVLTree<T extends Comparable<T>> {
         }
     }
 
+    /**
+     * Starting at a specific leaf node traverse upward and progressively rebalance the tree.
+     *
+     * @param node The leaf node to ascend from.
+     */
     private void rebalance(AVLTreeNode<T> node) {
         AVLTreeNode<T> prev = null;
         AVLTreeNode<T> prePrev = null;
@@ -230,19 +309,6 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
-     * Delete a node with a specified key.
-     ***/
-    public void remove(T key) {
-        remove(getRoot(), search(key));
-    }
-
-    private void remove(AVLTreeNode<T> tree, AVLTreeNode<T> z) {
-        // if the root is empty or there are no nodes to delete, return "null"
-        if (tree == null || z == null)
-            return;
-    }
-
-    /**
      * Print the tree.
      *
      * @param key: key-value
@@ -270,14 +336,18 @@ public class AVLTree<T extends Comparable<T>> {
         return root;
     }
 
-    protected void setRoot(AVLTreeNode<T> mRoot) {
-        this.root = mRoot;
+    protected void setRoot(AVLTreeNode<T> root) {
+        if (getRoot() != null)
+            getRoot().setIsRoot(false);
+        this.root = root;
+        if (root != null)
+            root.setIsRoot(true);
     }
 
     public static class AVLTreeNode<T extends Comparable<T>> {
         private T key;
         private int height;
-        private int balance;
+        private boolean isRoot;
         private AVLTreeNode<T> left;
         private AVLTreeNode<T> right;
         private AVLTreeNode<T> parent;
@@ -329,12 +399,14 @@ public class AVLTree<T extends Comparable<T>> {
             // Store a reference to the original right child node
             AVLTreeNode<T> nodeRight = node.getRight();
 
-            // Update node
-            node.setRight(nodeRight.getLeft());
+            if (nodeRight != null) {
+                // Update node
+                node.setRight(nodeRight.getLeft());
 
-            // Update node's left child
-            nodeRight.setLeft(node);
-            nodeRight.setParent(parent);
+                // Update node's left child
+                nodeRight.setLeft(node);
+                nodeRight.setParent(parent);
+            }
         }
 
         protected void leftRotate() {
@@ -356,24 +428,22 @@ public class AVLTree<T extends Comparable<T>> {
             AVLTreeNode<T> nodeLeft = node.getLeft();
 
             // Update node
-            node.setLeft(nodeLeft.getRight());
+            if (nodeLeft != null) {
+                node.setLeft(nodeLeft.getRight());
 
-            // Update node's left child
-            nodeLeft.setRight(node);
-            nodeLeft.setParent(parent);
+                // Update node's left child
+                nodeLeft.setRight(node);
+                nodeLeft.setParent(parent);
+            }
         }
 
         protected void rightRotate() {
             rightRotate(this, getParent());
         }
 
-        public void updateHeight() {
-            setHeight(1 + Math.max(height(getLeft()), height(getRight())));
-        }
+        public void updateHeight() { setHeight(1 + Math.max(height(getLeft()), height(getRight()))); }
 
-        private int height(AVLTreeNode<T> node) {
-            return node == null ? -1 : node.getHeight();
-        }
+        private int height(AVLTreeNode<T> node) { return node == null ? -1 : node.getHeight(); }
 
         public int getHeight() {
             return height;
@@ -430,6 +500,14 @@ public class AVLTree<T extends Comparable<T>> {
 
         protected void setParent(AVLTreeNode<T> parent) {
             this.parent = parent;
+        }
+
+        public boolean isRoot() {
+            return isRoot;
+        }
+
+        public void setIsRoot(boolean isRoot) {
+            this.isRoot = isRoot;
         }
     }
 }
