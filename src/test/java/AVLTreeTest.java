@@ -81,13 +81,14 @@ class AVLTreeTest {
 
     @Test
     public void testMax() {
-        AVLTree<Integer> tree = new AVLTree<>(testSequence1);
-        assertEquals(4, (tree).maximum());
+        assertEquals(4, (Integer) (new AVLTree<>(testSequence1)).maximum());
+        assertEquals(7, (Integer)(new AVLTree<>(testSequence2)).maximum());
     }
 
     @Test
     public void testMin() {
-        assertEquals(1, new AVLTree<>(testSequence1).minimum());
+        assertEquals(1, (Integer)(new AVLTree<>(testSequence1)).minimum());
+        assertEquals(-1, (Integer)(new AVLTree<>(testSequence2)).minimum());
     }
 
     @Test

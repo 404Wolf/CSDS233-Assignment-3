@@ -7,13 +7,11 @@ public class AVLTree<T extends Comparable<T>> {
     public AVLTree() {}
 
     public AVLTree(Iterable<T> sequence) {
-        for (T element : sequence)
-            insert(element);
+        extend(sequence);
     }
 
     public AVLTree(Object[] sequence) {
-        for (Object element : sequence)
-            insert((T) element);
+        extend(sequence);
     }
 
     /**
