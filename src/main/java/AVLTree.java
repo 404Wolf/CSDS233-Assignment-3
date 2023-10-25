@@ -1,9 +1,15 @@
+import javax.management.openmbean.KeyAlreadyExistsException;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 public class AVLTree<T extends Comparable<T>> {
     private AVLTreeNode<T> root;
+    private final Set<T> elements = new HashSet<>();
 
-    public AVLTree() {}
+
+    public AVLTree() {
+    }
 
     public AVLTree(Iterable<T> sequence) {
         extend(sequence);
@@ -20,6 +26,7 @@ public class AVLTree<T extends Comparable<T>> {
      */
     public void clear() {
         setRoot(null);
+        elements.clear();
     }
 
     /**
@@ -174,33 +181,52 @@ public class AVLTree<T extends Comparable<T>> {
     }
 
     /**
+     * Swap two nodes in the tree.
+     *
+     * @param key1 The key of the first node being swapped.
+     * @param key2 The key of the second node being swapped.
+     */
+    public void swap (T key1, T key2) {
+        swap(search(key1), search(key2));
+    }
+
+    private void swap (AVLTreeNode<T> node1, AVLTreeNode<T> node2) {
+        T node1Key = node1.getKey();
+        node1.setKey(node2.getKey());
+        node2.setKey(node1Key);
+    }
+
+    /**
      * Delete a node with a specified key.
      *
      * @param key The key of the node to remove.
      ***/
     public void remove(T key) {
+        if (!elements.contains(key))
+            throw new NoSuchElementException("Cannot remove an element that doesn't exist in the tree.");
         remove(search(key));
+        elements.remove(key);
     }
 
     private void remove(AVLTreeNode<T> node) {
         // Case 1: Node is a leaf
         // Resolution: Remove the node
-        if (!node.hasChild()) {
+        if (node.isLeaf()) {
             if (node.getParent().getLeft() == node)
                 node.getParent().setLeft(null);
-            if (node.getParent().getRight() == node)
+            else if (node.getParent().getRight() == node)
                 node.getParent().setRight(null);
-            rebalance(node.getParent());
+            rebalance(node);
         }
         // Case 2: Node has one child
         // Resolution: Swap the node with its child, then remove the node
         else if (node.hasLeft() ^ node.hasRight()) {
             if (node.hasLeft()) {
-                node.setKey(node.getLeft().getKey());
+                swap(node, node.getLeft());
                 remove(node.getLeft());
             }
-            if (node.hasRight()) {
-                node.setKey(node.getRight().getKey());
+            else if (node.hasRight()) {
+                swap(node, node.getRight());
                 remove(node.getRight());
             }
         }
@@ -210,9 +236,8 @@ public class AVLTree<T extends Comparable<T>> {
             // First swap the node with its inorder successor (but only update node, we don't actually need to do a
             // complete swap for the inorder successor's parent since we're going to delete it right after).
             AVLTreeNode<T> inorderSuccessor = inorderSuccessor(node);
-            node.setKey(inorderSuccessor.getKey());
+            swap(node, inorderSuccessor);
             remove(inorderSuccessor);
-            rebalance(inorderSuccessor);
         }
     }
 
@@ -222,6 +247,10 @@ public class AVLTree<T extends Comparable<T>> {
      * @param key The key to assign to the node being inserted.
      */
     public void insert(T key) {
+        if (elements.contains(key))
+            throw new KeyAlreadyExistsException("The element is already in the tree.");
+        else
+            elements.add(key);
         if (getRoot() == null)
             setRoot(new AVLTreeNode<>(key, null, null));
         else {
@@ -254,55 +283,61 @@ public class AVLTree<T extends Comparable<T>> {
      *
      * @param node The leaf node to ascend from.
      */
-    protected void rebalance(AVLTreeNode<T> node) {
-        AVLTreeNode<T> prev = null;
-        AVLTreeNode<T> prePrev = null;
-        boolean stillRequiresBalance = true;
+    private void rebalance(AVLTreeNode<T> node) {
+        boolean balancing = true;
 
         while (node != null) {
             node.updateHeight();
+            if (node.hasLeft())
+                node.getLeft().updateHeight();
+            if (node.hasRight())
+                node.getRight().updateHeight();
 
-            if (stillRequiresBalance) {
-                // If the balance is 0 we can stop investigating
-                if (node.hasChild() && node.balance() == 0)
-                    stillRequiresBalance = false;
+            if (balancing) {
+                 //  No rotations needed and investigation can be ended
+                 if (!node.isLeaf() && node.balance() == 0) {
+                     balancing = false;
+                 }
 
-                // If the balance is -2 or 2 then we do need to rotate, depending on
-                if (Math.abs(node.balance()) == 2) {
-                    // Right child right subtree -> rotate node left
-                    if (node.hasRight() && prePrev == node.getRight().getRight()) {
-                        if (getRoot() == node)
+                if (node.balance() >= 2) {
+                    // Right child right subtree
+                    if (node.hasRight() && node.getRight().balance() >= 1) {
+                        if (node == getRoot())
                             setRoot(node.getRight());
                         node.leftRotate();
+                        balancing = false;
                     }
-                    // Left child left subtree -> rotate node right
-                    if (node.hasLeft() && prePrev == node.getLeft().getLeft()) {
-                        if (getRoot() == node)
+                    // Right child left subtree
+                    else if (node.hasRight() && node.getRight().balance() <= 0) {
+                        if (node == getRoot())
+                            setRoot(node.getRight().getLeft());
+                        node.getRight().rightRotate();
+                        node.leftRotate();
+                        balancing = false;
+                    }
+                    else throw new RuntimeException("A rotation should have been made.");
+                }
+                else if (node.balance() <= -2) {
+                    // Left child left subtree
+                    if (node.hasLeft() && node.getLeft().balance() <= -1) {
+                        if (node == getRoot())
                             setRoot(node.getLeft());
                         node.rightRotate();
+                        balancing = false;
                     }
-                    if (prev != null) {
-                        // Left child right subtree -> rotate prev left, rotate node right
-                        if (node.hasLeft() && prePrev == node.getLeft().getRight()) {
-                            prev.leftRotate();
-                            node.rightRotate();
-                        }
-                        // Right child right subtree -> rotate prev right, rotate node left
-                        if (node.hasRight() && prePrev == node.getRight().getLeft()) {
-                            prev.rightRotate();
-                            node.leftRotate();
-                        }
+                    // Left child right subtree
+                    else if (node.hasLeft() && node.getLeft().balance() >= 0) {
+                        if (node == getRoot())
+                            setRoot(node.getLeft().getRight());
+                        node.getLeft().leftRotate();
+                        node.rightRotate();
+                        balancing = false;
                     }
-
-                    // Since a rotation has been preformed the investigation is complete.
-                    stillRequiresBalance = false;
+                    else throw new RuntimeException("A rotation should have been made.");
                 }
             }
 
             node.updateHeight();
-
-            prePrev = prev;
-            prev = node;
             node = node.getParent();
         }
     }
@@ -371,6 +406,13 @@ public class AVLTree<T extends Comparable<T>> {
         }
 
         /**
+         * Determine whether the node is a leaf.
+         *
+         * @return Whether the node is a leaf.
+         */
+        public boolean isLeaf() { return !hasChild(); }
+
+        /**
          * Obtain the balance of the node.
          *
          * @implNote The balance of a node is equal to the height of the right subtree minus the height of the left subtree.
@@ -390,7 +432,7 @@ public class AVLTree<T extends Comparable<T>> {
         /**
          * Left rotate the node.
          */
-        protected void leftRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
+        private void leftRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
             if (parent != null) {
                 if (parent.getLeft() == node)
                     parent.setLeft(node.getRight());
@@ -411,14 +453,14 @@ public class AVLTree<T extends Comparable<T>> {
             }
         }
 
-        protected void leftRotate() {
+        private void leftRotate() {
             leftRotate(this, getParent());
         }
 
         /**
          * Right rotate the node.
          */
-        protected void rightRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
+        private void rightRotate(AVLTreeNode<T> node, AVLTreeNode<T> parent) {
             if (parent != null) {
                 if (parent.getRight() == node)
                     parent.setRight(node.getLeft());
@@ -439,7 +481,7 @@ public class AVLTree<T extends Comparable<T>> {
             }
         }
 
-        protected void rightRotate() {
+        private void rightRotate() {
             rightRotate(this, getParent());
         }
 
