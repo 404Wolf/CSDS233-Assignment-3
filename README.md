@@ -6,6 +6,7 @@ CWRU CSDS233 Assignment 3
 * I've reimplemented my own methods for AVL tree rotations, placing these rotation methods directly into the node class definition.
 * I've properly encapsulated all the fields of the AVL tree and AVL tree node, which previously were accessed directly.
 * JUnit tests can be found under the `src/test` folder. These tests test various methods for the tree, and various different cases for each method.
+* As is proper practice for OOP, I've changed methods that previously outputted the node and intook the root to simply use the current root contained within the container `AVLTree` class.
 
 ## Notes
 * The height is 1 less than the provided testcase's height because a node's height is formally defined to be the number of edges of the longest path from the root to the deepest leaf. The sample test seems to include the root node in the height computation, which is inconsistent with the definition of tree height. 
